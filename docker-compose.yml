@@ -1,0 +1,85 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dichtbij3d-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dichtbij3d}
+      POSTGRES_USER: ${POSTGRES_USER:-dichtbij3d}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dichtbij3d}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-dichtbij3d} -d ${POSTGRES_DB:-dichtbij3d}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [dichtbij3d]
+
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: dichtbij3d-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-dichtbij3d}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-dichtbij3d-secret}
+    volumes:
+      - miniodata:/data
+    ports:
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks: [dichtbij3d]
+
+  backend:
+    image: ghcr.io/jordydevrix/dichtbij3d-backend:${BACKEND_TAG:-latest}
+    container_name: dichtbij3d-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-dichtbij3d}
+      DB_USER: ${POSTGRES_USER:-dichtbij3d}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-dichtbij3d}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-dichtbij3d}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-dichtbij3d-secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-dichtbij3d}
+      DICHTBIJ3D_JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET to 64+ random characters}
+      CORS_ORIGINS: ${PUBLIC_URL:-http://localhost:8088}
+      WEBAUTHN_RP_ID: ${WEBAUTHN_RP_ID:-localhost}
+      WEBAUTHN_ORIGINS: ${PUBLIC_URL:-http://localhost:8088}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@dichtbij3d.nl}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD for the bootstrap admin}
+      DEMO_DATA: ${DEMO_DATA:-false}
+    networks: [dichtbij3d]
+
+  frontend:
+    image: ghcr.io/jordydevrix/dichtbij3d-frontend:${FRONTEND_TAG:-latest}
+    container_name: dichtbij3d-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      # Empty = same origin: nginx proxies /api to the backend service, so the
+      # browser never needs to know the backend host and there is no CORS.
+      API_URL: ${API_URL:-}
+      BACKEND_URL: http://backend:8080
+    ports:
+      - '${FRONTEND_PORT:-8088}:80'
+    networks: [dichtbij3d]
+
+volumes:
+  pgdata:
+  miniodata:
+
+networks:
+  dichtbij3d:
+    driver: bridge
