@@ -75,6 +75,14 @@ services:
     ports:
       - '${FRONTEND_PORT:-8088}:80'
     networks: [dichtbij3d]
+    frontend:
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${SUBDOMAIN:-dichtbij3d-tst}.rule=Host(`${SUBDOMAIN:-dichtbij3d-tst}.clovercloud.cc`)"
+      - "traefik.http.routers.${SUBDOMAIN:-dichtbij3d-tst}.entrypoints=websecure"
+      - "traefik.http.services.${SUBDOMAIN:-dichtbij3d-tst}.loadbalancer.server.port=80"
 
 volumes:
   pgdata:
@@ -83,3 +91,5 @@ volumes:
 networks:
   dichtbij3d:
     driver: bridge
+  proxy:
+    external: true
