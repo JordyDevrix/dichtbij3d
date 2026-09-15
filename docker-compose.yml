@@ -59,6 +59,17 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@dichtbij3d.nl}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD for the bootstrap admin}
       DEMO_DATA: ${DEMO_DATA:-false}
+      # Mail / SMTP configuration (passed from Portainer stack env)
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-${MAIL_HOST:-${SMTP_HOST:-}}}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-${MAIL_PORT:-${SMTP_PORT:-587}}}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-${MAIL_USERNAME:-${SMTP_USERNAME:-${SMTP_USER:-}}}}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-${MAIL_PASSWORD:-${SMTP_PASSWORD:-${SMTP_PASS:-}}}}
+      SPRING_MAIL_SMTP_AUTH: ${SPRING_MAIL_SMTP_AUTH:-${MAIL_SMTP_AUTH:-${SMTP_AUTH:-true}}}
+      SPRING_MAIL_SMTP_STARTTLS: ${SPRING_MAIL_SMTP_STARTTLS:-${MAIL_SMTP_STARTTLS:-${SMTP_STARTTLS:-true}}}
+      MAIL_FROM: ${MAIL_FROM:-noreply@jordydevrix.com}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Dichtbij3D}
+      FRONTEND_URL: ${FRONTEND_URL:-${PUBLIC_URL:-http://localhost:8088}}
+      MAIL_RESET_TOKEN_TTL: ${MAIL_RESET_TOKEN_TTL:-PT30M}
     networks: [dichtbij3d]
 
   frontend:
