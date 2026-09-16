@@ -70,6 +70,7 @@ services:
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Dichtbij3D}
       FRONTEND_URL: ${FRONTEND_URL:-${PUBLIC_URL:-http://localhost:8088}}
       MAIL_RESET_TOKEN_TTL: ${MAIL_RESET_TOKEN_TTL:-PT30M}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
     networks: [dichtbij3d]
 
   frontend:
@@ -83,6 +84,7 @@ services:
       # browser never needs to know the backend host and there is no CORS.
       API_URL: ${API_URL:-}
       BACKEND_URL: http://backend:8080
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
     ports:
       - '${FRONTEND_PORT:-8088}:80'
     networks: [dichtbij3d, proxy]
